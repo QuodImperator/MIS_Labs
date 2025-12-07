@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '../models/category.dart';
 import '../models/detailed_meal.dart';
 import '../services/api_service.dart';
 import 'meals_by_category_screen.dart';
 import 'meal_detail_screen.dart';
+import 'favorites_screen.dart';
 
 class CategoriesScreen extends StatefulWidget {
   const CategoriesScreen({super.key});
@@ -22,6 +24,37 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   void initState() {
     super.initState();
     futureCategories = ApiService.fetchCategories();
+    _setupFirebaseNotifications();
+  }
+
+  void _setupFirebaseNotifications() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    NotificationSettings settings = await messaging.requestPermission(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
+
+    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+      FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+        if (message.notification != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  "${message.notification!.title}: ${message.notification!.body}"),
+              action: SnackBarAction(
+                label: 'View',
+                onPressed: _navigateToRandomMeal,
+              ),
+            ),
+          );
+        }
+      });
+      
+      String? token = await messaging.getToken();
+      print("Firebase Messaging Token: $token");
+    }
   }
 
   void _filterCategories(String query) {
@@ -59,6 +92,16 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
       appBar: AppBar(
         title: const Text('Recipe Categories'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.favorite),
+            tooltip: 'Favorites',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const FavoritesScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.shuffle),
             tooltip: 'Random Recipe',

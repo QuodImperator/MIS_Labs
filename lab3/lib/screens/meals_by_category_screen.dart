@@ -3,6 +3,7 @@ import '../models/category.dart';
 import '../models/simple_meal.dart';
 import '../models/detailed_meal.dart';
 import '../services/api_service.dart';
+import '../services/favorites_service.dart';
 import 'meal_detail_screen.dart';
 
 class MealsByCategoryScreen extends StatefulWidget {
@@ -19,6 +20,7 @@ class _MealsByCategoryScreenState extends State<MealsByCategoryScreen> {
   List<SimpleMeal> _allMeals = [];
   List<SimpleMeal> _filteredMeals = [];
   final TextEditingController _searchController = TextEditingController();
+  final FavoritesService _favoritesService = FavoritesService();
 
   @override
   void initState() {
@@ -87,6 +89,8 @@ class _MealsByCategoryScreenState extends State<MealsByCategoryScreen> {
                   itemCount: _filteredMeals.length,
                   itemBuilder: (context, index) {
                     final meal = _filteredMeals[index];
+                    final isFavorite = _favoritesService.isFavorite(meal.id);
+
                     return GestureDetector(
                       onTap: () async {
                         try {
@@ -121,15 +125,41 @@ class _MealsByCategoryScreenState extends State<MealsByCategoryScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             Expanded(
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(
-                                    top: Radius.circular(10)),
-                                child: Image.network(
-                                  meal.thumbnail,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
-                                      const Icon(Icons.restaurant),
-                                ),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(10)),
+                                    child: Image.network(
+                                      meal.thumbnail,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Icon(Icons.restaurant),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 5,
+                                    right: 5,
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.white70,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: IconButton(
+                                        icon: Icon(
+                                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            _favoritesService.toggleFavorite(meal);
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             Padding(
