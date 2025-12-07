@@ -1,0 +1,7 @@
+# lab2
+
+A meal recipe app
+
+## Demonstration
+
+![gif](demonstration.gif)
